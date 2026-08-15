@@ -17,21 +17,34 @@
   the iteration process.
 -->
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: .NET 8.0 LTS (fixed by Constitution Principle II)  
+**Primary Dependencies**: NBitcoin + BCL only; xUnit for tests (fixed by Principle II)  
+**Storage**: None — nothing is persisted (Principle III)  
+**Testing**: xUnit against official BIP test vectors (Principle V)  
+**Target Platform**: Cross-platform console (Windows/Linux/macOS), offline execution  
+**Project Type**: Interactive console application  
+**Performance Goals**: [domain-specific, e.g., full report for 10 wallets under 5s]  
+**Constraints**: No network calls, no file/log/clipboard writes (Principle III); no NuGet package outside the fixed stack (Principle II); Docker NOT available locally  
+**Scale/Scope**: [domain-specific, e.g., up to N derived wallets, K passphrases each]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Mark each gate PASS / FAIL / N/A. Any FAIL must either be resolved or justified in
+Complexity Tracking below — **except** Principles I, III and V, which are absolute blockers and
+cannot be waived (Governance).
+
+| Gate | Principle | Check |
+|---|---|---|
+| Crypto primitives | I 🔒 | No hand-rolled hashes, HMAC, EC math or address encoding — NBitcoin/BCL only. BIP85 composed solely from BIP32 hardened derivation + HMAC-SHA512, isolated in one component. Randomness from `RandomNumberGenerator`; no `System.Random` anywhere near key material. |
+| Stack | II | No NuGet package outside NBitcoin + xUnit and its test-execution infrastructure (`Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, test project only); terminal UI built on `System.Console` only; no ORM, DB driver, HTTP client or telemetry SDK; no task depends on running `docker` locally. |
+| No persistence / no network | III 🔒 | No writes to file, DB, log, environment variable, registry or clipboard; no network call of any kind; non-interactive `stdout` is detected and the user is warned. |
+| Code conventions | IV | PascalCase types/members, `_camelCase` private fields, UPPER_CASE named constants (no magic numbers), file-scoped namespaces, nullable enabled, warnings as errors, immutable result types, `*.Core` free of `System.Console`. |
+| Test vectors | V 🔒 | Every derivation path is covered by a test against the official BIP vectors, embedded in the test project; determinism asserted explicitly; no expected value adjusted to match code output. |
+| Memory & output hygiene | VI | Passphrases read without echo; sensitive buffers zeroed including on error/interrupt paths; no sensitive material in exception messages; pre-generation warning and post-generation terminal-clearing guidance present. |
+
+🔒 = non-waivable. A FAIL here blocks the plan; it cannot be moved to Complexity Tracking.
 
 ## Project Structure
 
@@ -55,50 +68,38 @@ specs/[###-feature]/
   not include Option labels.
 -->
 
+The three-project layout is fixed by the Constitution ("Restrições Adicionais → Estrutura da
+Solução"). Additional projects require a formal amendment.
+
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+BtcVaultProtocol.sln
+src/BtcVaultProtocol.Wallet.Core/       # Domain: entropy, mnemonics, BIP32/BIP85 derivation, multisig
+├── [folders per concern, e.g. Entropy/, Mnemonics/, Derivation/, Multisig/]
+└── (no System.Console usage — Principle IV)
 
-tests/
-├── contract/
-├── integration/
-└── unit/
+src/BtcVaultProtocol.Wallet.Console/    # Interaction: prompts, input validation, final report
+├── Program.cs                    # Entry point + top-level exception handling
+└── [folders per concern, e.g. Prompts/, Flow/, Rendering/]
 
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+tests/BtcVaultProtocol.Wallet.Tests/    # xUnit: official BIP vectors + flow rules
+└── [mirrors Core structure; vectors embedded, no external files]
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+Dependency flow: `Console → Core`. `Core` MUST NOT reference `Console`. `Tests` references both.
+
+**Structure Decision**: [Document the concrete folders created under each project for this
+feature. Deviating from the three-project layout requires a constitutional amendment, not a
+Complexity Tracking entry.]
 
 ## Complexity Tracking
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
+>
+> Principles I (crypto primitives), III (no persistence/network) and V (test vectors) are
+> non-waivable — a violation there requires a constitutional amendment and MUST NOT be recorded
+> here as a justified exception.
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| [e.g., extra NuGet dependency] | [current need] | [why NBitcoin + BCL insufficient] |
+| [e.g., 4th project] | [current need] | [why the fixed 3-project layout insufficient] |

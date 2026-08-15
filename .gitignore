@@ -1,0 +1,37 @@
+# .NET build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+*.user
+*.suo
+*.userprefs
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+coverage*.json
+coverage*.xml
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Nunca versionar material sensível gerado pela ferramenta
+*.seed
+*.mnemonic
+wallet-output*.txt

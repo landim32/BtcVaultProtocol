@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>BtcVaultProtocol.Wallet.Console</RootNamespace>
+    <AssemblyName>BtcVaultProtocol.Wallet.Console</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BtcVaultProtocol.Wallet.Core\BtcVaultProtocol.Wallet.Core.csproj" />
+  </ItemGroup>
+
+</Project>
